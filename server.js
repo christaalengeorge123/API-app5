@@ -21,7 +21,7 @@ app.use('/api',appRoutes);
 
 
 //mongoose.connect('mongodb://localhost:27017/tutorial',function(err){
-mongoose.connect('mongodb://<chris>:<chris>@ds129013.mlab.com:29013/lllapp',function(err){
+mongoose.connect('mongodb://chris:chris@ds129013.mlab.com:29013/lllapp',function(err){
 	if(err){
 		console.log('Not connected to the database: ' +err);
 	}else{
