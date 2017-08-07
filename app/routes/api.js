@@ -1,16 +1,17 @@
 var User = require('../models/user'); // Import User Model
 var jwt = require('jsonwebtoken'); // Import JWT Package
 var secret = 'harrypotter'; // Create custom secret for use in JWT
-var nodemailer = require('nodemailer'); // Import Nodemailer Package
-var sgTransport = require('nodemailer-sendgrid-transport'); // Import Nodemailer Sengrid Transport Package
-
+//var nodemailer = require('nodemailer'); // Import Nodemailer Package
+//var sgTransport = require('nodemailer-sendgrid-transport'); // Import Nodemailer Sengrid Transport Package
+const nodemailer = require('nodemailer');
+const xoauth2 = require('xoauth2');
 //var sendgrid =require('sendgrid')(demoemail,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);
  var sess='';
 module.exports= function(router){
 
 
 
-var options = {
+/*var options = {
   auth: {
     api_user: 'kottackalchrista',
     api_key: 'Pr15cs1005'
@@ -26,10 +27,23 @@ var client = nodemailer.createTransport({
        tls: { rejectUnauthorized: false }
    });﻿
 
-var client = nodemailer.createTransport(sgTransport(options));
+var client = nodemailer.createTransport(sgTransport(options));*/
 
 //http://localhost:8080/api/users
 //User registration route
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        type: 'OAuth2',
+            user: 'kottackalchrista@gmail.com',
+            clientId: '432038395028-i0728jls5fo67gqre70cfd5hqtb1hb14.apps.googleusercontent.com',
+            clientSecret: 'MV8IoQzWOEacgmWEttfui4YO',
+            refreshToken: '1/Y62TC5UmCb4kwuH625xpVKezpQzaK9OjBIOGl9BSRKY'
+            // accessToken:'ya29.GlueBICGKqQrDzacHjMlYAQEdbW90JHqTggePSd-JKnJit87CJskZvzIW2fWIkHtx0E-dWeo1sW1vS2agPZu34L-76_MYAOGNmhlG_fXZ2Ldu1uN1wRdxx4WieX5'
+        
+    },
+});
 router.post('/users',function(req,res){
 	var user=new User();
 	user.username= req.body.username;
@@ -49,25 +63,22 @@ router.post('/users',function(req,res){
 			
 		} else{
 
-			var email = {
-			  from: 'Localhost Staff,staff@localhost.com',
-			  to: user.email,
-			  subject: 'Localhost Activation Link',
-			  text: 'Hello ' + user.username + ', thank you for registering at localhost.com. Please click on the following link to complete your activation: http://localhost:8080/activate/' + user.temporarytoken,
-			  html: 'Hello<strong> ' + user.username + '</strong>,<br><br>Thank you for registering at localhost.com. Please click on the link below to complete your activation:<br><br><a href="http://localhost:8080/activate/' + user.temporarytoken + '">http://localhost:8080/activate/</a>'
-			};
+			var mailOptions = {
+    			from: 'kottackalchrista@gmail.com',
+    			to: user.email,
+    			subject: 'Account Activation',
+    			text: 'Hello ' + user.username + ', thank you for registering at localhost.com. Please click on the following link to complete your activation: http://localhost:8080/activate/' + user.temporarytoken
+				}
 
-			client.sendMail(email, function(err, info){
-			    if (err ){
-			    	
-			      console.log(err);
 
-			    }
-			    else {
-			      console.log('Message sent: ' + info.response);
-			      console.log('christa');
-			    }
-			});
+			transporter.sendMail(mailOptions, function (err, res) {
+    			if(err){
+       			 console.log('Error');
+    			} else {
+        		console.log('Email Sent');
+    				}
+				})
+
 			res.json({ success:true, message:'Account registered! Please check your e-mail for activation link'});
 			//res.json({success:true, message:'User authenticated!', token: token});
 
@@ -125,25 +136,22 @@ router.post('/generate/', function(req, res) {
             } else  {
 							// If save succeeds, create e-mail object
 							var token = jwt.sign({ username: user.username, email: user.email }, secret, { expiresIn: '24h' }); 
-							var email = {
-								from: 'Localhost Staff, staff@localhost.com',
-								to: user.email,
-								subject: 'Localhost Account Activated',
-								text: 'Hello ' + user.username + ', hureyyyyyyyyyyyyy!'+ 'token for accesiing api' + token,
-								html: 'Hello<strong> ' + user.username + '</strong>,<br><br>'+ ' token for accessing api-' +  token
-							};
+							var mailOptions = {
+    			from: 'kottackalchrista@gmail.com',
+    			to: user.email,
+    			subject: 'Generated Tokens',
+    			text: 'Hello ' + user.username + ', hureyyyyyyyyyyyyy!'+ 'token for accesiing api- ' + token
+				}
 
 							// Send e-mail object to user
-							client.sendMail(email, function(err, info) {
-								if (err) {
-									console.log(err);
-								}
-								else
-								{
-									console.log('Message sent' +info.response);
-								} // If unable to send e-mail, log error info to console/terminal
-							});
-							res.json({ success: true, message: 'Please check your mail for accessing token!' }); // Return success message to controller
+					transporter.sendMail(mailOptions, function (err, res) {
+    			       if(err){
+       			       console.log('Error');
+    			       } else {
+        		       console.log('Email Sent');
+    				   }
+				        })
+			 res.json({ success: true, message: 'Please check your mail for accessing token!' }); // Return success message to controller
 						}
         });
     });
@@ -173,24 +181,22 @@ router.put('/activate/:token', function(req, res) {
 							// If unable to save user, log error info to console/terminal
 						} else {
 							// If save succeeds, create e-mail object
-							var email = {
-								from: 'Localhost Staff, staff@localhost.com',
-								to: user.email,
-								subject: 'Localhost Account Activated',
-								text: 'Hello ' + user.username + ', Your account has been successfully activated!',
-								html: 'Hello<strong> ' + user.username + '</strong>,<br><br>Your account has been successfully activated!'
-							};
+							var mailOptions = {
+    			from: 'kottackalchrista@gmail.com',
+    			to: user.email,
+    			subject: 'Activated',
+    			text: 'Hello ' + user.username + ', Your account has been successfully activated!'
+				}
+
 
 							// Send e-mail object to user
-							client.sendMail(email, function(err, info) {
-								if (err) {
-									console.log(err);
-								}
-								else
-								{
-									console.log('Message sent' +info.response);
-								} // If unable to send e-mail, log error info to console/terminal
-							});
+							transporter.sendMail(mailOptions, function (err, res) {
+    			       if(err){
+       			       console.log('Error');
+    			       } else {
+        		       console.log('Email Sent');
+    				   }
+				        })
 							res.json({ success: true, message: 'Account activated!' }); // Return success message to controller
 						}
 					});
